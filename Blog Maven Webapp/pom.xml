@@ -131,6 +131,18 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
   <build>
+  		<!-- 不在resource的资源文件要加上这个打包时才会把资源文件打包进去 -->
+  		<resources>
+            <resource>
+                <directory>src/main/java</directory>
+                <includes>
+                    <include>**/*.properties</include>
+                    <include>**/*.xml</include>
+                </includes>
+                
+                <filtering>false</filtering>
+            </resource>
+        </resources>
     <plugins>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
