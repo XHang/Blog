@@ -8,8 +8,8 @@
 	<select id="selectNewArticle" resultType="Article">
 		select title, date ,left(context,10) context,id from article where userid=#{id} order by date desc limit 0,5
 	</select>
-	<select id="selectArticle" resultType="Article">
-		select * from article where id=#{id}
+	<select id="selectArticleById" resultType="Article">
+		select * from article where id=#{id} 
 	</select>
 	<insert id="saveArticle">
 		insert into article value(null,#{title},#{context},#{user.id},0,0,#{category.id},#{hide},now())
@@ -24,13 +24,25 @@
 		select count(*) from article where userid=#{userid}
 	</select>
 	<select id="selectArticleByCategoryId" resultType="Article">
-		select title, date ,left(context,10) context,id from article where categoryid=#{categoryId} 
+		select title, date ,left(context,10) context,id from article where categoryid=#{categoryId} limit #{from},#{size}
 	</select>
-	<select id="search" resultType="Article" parameterType="String">
-		select title, date ,left(context,10) context,id from article where title like  #{keyWord}  or context like #{keyWord}  
+	<select id="search" resultType="Article" >
+		select title, date ,left(context,10) context,id from article where title like  #{keyWord}  or context like #{keyWord}   limit #{from},#{size}
 	</select>
-	<select id="getAllArticle" resultType="Article">
-		select title, date ,left(context,10) context,id from article where userid=#{userid}
+	<select id="searchTotal" resultType="int">
+		select count(*) from article where title like  #{keyWord}  or context like #{keyWord};
+	</select>
+	<select id="selectAllArticleUsePaging" resultType="Article">
+		select title, date ,left(context,10) context,id from article where userid=#{userid} limit #{from},#{size}
+	</select>
+	<!-- 根据where条件构建sql语句，查询总数 -->
+	<select id="selectTotalByWherer" resultType="int">
+		select count(*) from article 
+		<foreach collection="parameterMap" index="parameter" item="value" >
+			<trim prefix="where" prefixOverrides="and|or">
+       			and ${parameter}=#{value}
+       		</trim>
+		</foreach>
 	</select>
 	<update id="update">
 		update article set title=#{title},context=#{context} where id=#{id}

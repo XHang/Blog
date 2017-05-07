@@ -1,5 +1,7 @@
 package com.Blog.Service;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,6 +14,7 @@ import com.Blog.Ecxeprion.UserInvalidAccess;
 import com.Blog.Ecxeprion.UserNotFound;
 import com.Blog.Ecxeprion.UserPasswordError;
 import com.Blog.Model.User;
+import com.Blog.Util.CiphertextUitl;
 import com.Blog.Util.MD5Util;
 import com.Blog.Util.Mail;
 import com.Blog.Util.VerificationCodeTask;
@@ -23,12 +26,15 @@ public class UserService  {
 	int threadID=0;							//定义每次存入线程集合的线程索引
 	
 	//添加用户
+	//TODO 密码要用加密存储！
 	public void  add(User user) throws Exception{
 		if(isExist(user)){
 			throw new Exception("User Already Exist!");
 		}
+		
 		String md5 =MD5Util.MD5(user.getUsername()+System.currentTimeMillis());//随机生成验证码
-		user.setActivationCode(md5);										   //给注册用户生成验证码
+		user.setActivationCode(md5);										 										    //给注册用户生成验证码
+		user.setPassword(CiphertextUitl.encryption(user.getPassword()));						//给用户密码加密
 		dao.saveUser(user);
 		categorydao.createDefaultCategory(user.getId());//为注册用户建一个默认的日志类别
 		
@@ -46,13 +52,17 @@ public class UserService  {
 		threadID++;
 		return;
 		}
+	/**
+	 * 判断用户是否存在,根据用户名或者邮箱判断
+	 * @param user
+	 * @return
+	 */
 	public boolean isExist(User user){
 		int count=dao.isExist(user);
 		if(count==0){
 			return false;
 		}
 		return true;
-		
 	}
 	//用户激活并返回激活后的实体对象
 	public User userActivation(int id,String ActivationCode,int threadID) throws Exception{
@@ -75,8 +85,8 @@ public class UserService  {
 		if(trueuser==null){
 			throw new UserNotFound("用户找不到");
 		}
-
-		if(!(trueuser.getPassword().equals(user.getPassword()))){
+		
+		if(!(trueuser.getPassword().equals(CiphertextUitl.encryption(user.getPassword())))){
 			throw new  UserPasswordError("用户密码错误");
 		}
 		
@@ -118,8 +128,5 @@ public class UserService  {
 		thread.start();		//开启等待线程！
 		threads.add(thread);
 		threadID++;
-		
 	}
-
-
 }

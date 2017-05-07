@@ -22,6 +22,7 @@ import com.Blog.Model.Article;
 import com.Blog.Model.User;
 import com.Blog.Service.ArticleService;
 import com.Blog.Util.DownloadFileUtil;
+import com.Blog.Vo.ArticlePageVo;
 @Controller
 @RequestMapping("/article")
 public class ArticleController {
@@ -39,48 +40,42 @@ public class ArticleController {
 		articleservice.save(article); 
 		return "redirect:/user/intoSpace.do";
 	}
-	public ArticleService getArticleservice() {
-		return articleservice;
-	}
-	//展现博客-暂时定为自己
+	
+	//根据博客ID显示博客内容(AJAX)
+	@ResponseBody
 	@RequestMapping("/read")
-	public ModelAndView getArticle(int id){
-		Article article=articleservice.getArticle(id);
-		 ModelAndView mv=new ModelAndView();
-		 mv.addObject("article", article);
-		 mv.setViewName("readBlog");
-		 return mv;
+	public  Article getArticle(int id){
+		return articleservice.getArticle(id);
 	}
+	//根据类别ID加载该类别下的文章列表(AJAX+分页)
+	@ResponseBody
 	@RequestMapping("/articleList")
-	public ModelAndView articleListByCategory(int categoryId){
-		List<Article> articles=articleservice.getArticleListByCategory(categoryId);
-		ModelAndView mv=new ModelAndView();
-		mv.addObject("articles", articles);
-		mv.setViewName("ArticleList");
-		return mv;
+	public ArticlePageVo articleListByCategory(int categoryId,int pageNo,int size){
+		return articleservice.getArticleListByCategory(categoryId,pageNo,size);
 	}
+	//根据关键字搜索文章列表(AJAX+分页)
 	@RequestMapping("/search")
-	public ModelAndView search(String keyWord){
-		List <Article> articles=articleservice.search(keyWord);
-		ModelAndView mv=new ModelAndView();
-		mv.addObject("articles", articles);
-		mv.setViewName("ArticleList");
-		return mv;
+	@ResponseBody
+	public ArticlePageVo search(String keyWord,int pageNo,int size){
+		return articleservice.search(keyWord,pageNo,size);
 	}
-	@Autowired
-	public void setArticleservice(ArticleService articleservice) {
-		this.articleservice = articleservice;
-	}
-	@RequestMapping("/getAllArticle.do")
-	public ModelAndView getAllArticle(HttpSession httpSession){
+	//TODO 迭代开发：改成分页
+	/**
+	 * 分页取出文章列表
+	 * @param httpSession
+	 * @param pageNo		请求的页数
+	 * @param size  每页的显示数目
+	 * @return 分页对象
+	 */
+	@ResponseBody
+	@RequestMapping("/getAllArticle")
+	public ArticlePageVo getAllArticle(HttpSession httpSession,int pageNo,int size){
 		User user=(User)httpSession.getAttribute("user");
-		List <Article> articles=articleservice.getAllArticle(user.getId());
-		ModelAndView mv=new ModelAndView();
-		mv.addObject("articles", articles);
-		mv.setViewName("ArticleList");
-		return mv;
+		return  articleservice.getAllArticleUsePaging(user.getId(),pageNo,size);
 		
 	}
+	/*//修改文章 
+	//TODO 目测可以删除该方法，因为上面已经有了一个功能相同的方法
 	@RequestMapping("motdify")
 	public ModelAndView modity(int articleId){
 		Article article=articleservice.getArticle(articleId);
@@ -89,18 +84,22 @@ public class ArticleController {
 		mv.setViewName("modifyBlog");
 		return mv;
 		
-	}
+	}*/
+	//接受一篇文章，并更新
 	@RequestMapping("execModify")
 	public String execModify(Article article){
 		articleservice.update(article);
 		return "redirect:/user/intoSpace.do";
 	}
+	//接受一个文章ID，删除该文章
 	@RequestMapping("delete")
 	public String delete(int articleid){
 		articleservice.deleteArticleById(articleid);
 		return "redirect:/user/intoSpace.do";
 	}
 	//文章图片上传！
+	//保存路径为当前网站根目录的resource/ArticleImages文件夹里
+	//TODO 尝试把返回的JSon数据优化
 	@ResponseBody
 	@RequestMapping(value="/imageupload",produces="application/json;charset=UTF-8")
 	public String imageupload(@RequestParam("editormd-image-file")  MultipartFile Imgfile,HttpServletRequest request,HttpServletResponse response) {
@@ -140,9 +139,14 @@ public class ArticleController {
 	//下载文件，需要传参数：文件名
 	@RequestMapping("downloadFile")
 	public void downloadFile(HttpServletRequest request,HttpServletResponse response,String filename) throws UnsupportedEncodingException{
-		String path=request.getSession().getServletContext().getRealPath("/resources/download")+"\\";	//获取被下载文件的目录，暂时定为网站根目录的upload文件夹
+		String path=request.getSession().getServletContext().getRealPath("/resources/download")+"\\";
 		DownloadFileUtil.downloadFile(filename,path,response);					//传入文件名，文件类型（不需要），文件目录，response来下载文件。
-		
-		
+	}
+	public ArticleService getArticleservice() {
+		return articleservice;
+	}
+	@Autowired
+	public void setArticleservice(ArticleService articleservice) {
+		this.articleservice = articleservice;
 	}
 }

@@ -37,12 +37,13 @@ public class UserController {
 	private ArticleService articleservice;
 	private CategoryService categoryservice;
 	//注册用户
+	//TODO 注册用户，密码全部设置为密文
 	@RequestMapping("/register")
 	public ModelAndView register(User user){
 		ModelAndView mv=new ModelAndView();
 		try {     
-			userservice.add(user);				   	  //vo对象转成实体对象，并存储，抛出存储失败异常：用户名或者邮箱已存在
-			mv.setViewName("registerSuccess");		  	 //设置注册成功页面
+			userservice.add(user);
+			mv.setViewName("registerSuccess");		  				 //设置注册成功页面
 			mv.addObject("username", user.getUsername());	 //添加视图数据
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -51,14 +52,21 @@ public class UserController {
 		return mv;
 	}
 	
-	//激活用户
+	/**
+	 * 
+	 * @param md5随机生成的MD5值
+	 * @param id	用户ID
+	 * @param threadID 线程ID
+	 * @param request		请求
+	 * @return
+	 */
 	@RequestMapping("/{md5}/{id}/{threadID}/userActivation")
 	public ModelAndView verify(@PathVariable String md5,@PathVariable int id,@PathVariable int threadID,HttpServletRequest request){
 		ModelAndView mv=new ModelAndView();
 		try {
 			User user=userservice.userActivation(id, md5,threadID);		//进行激活码校验，返回已被激活的user对象
 			mv.addObject("infohead", "恭喜"+user.getUsername()+",成功验证邮箱");
-			mv.addObject("infobody", "3秒后进入您的新世界");
+			mv.addObject("infobody", "3秒后进入您的博客");
 			mv.addObject("flag", "true");
 			mv.setViewName("verify");				//设置激活成功的视图
 			request.getSession().setAttribute("user", user);//给session设置进user对象
@@ -71,6 +79,7 @@ public class UserController {
 		return mv;
 	}
 	//进入空间请求,配置了一个拦截器，检测session有没有user对象
+	//TODO 全部改为用ajax读取数据
 	@RequestMapping("/intoSpace")
 	public ModelAndView intoSpace(HttpServletRequest request){
 		User user=(User) request.getSession().getAttribute("user");
@@ -123,13 +132,14 @@ public class UserController {
 		
 	}
 	
-	
+	//修改心情，TODO 修改完毕重新刷新该页面
 	@RequestMapping("/changeMood")
 	public void changeMood(String mood,HttpSession session){
 		User user=(User)session.getAttribute("user");
 		user.setMood(mood);
 		userservice.changeMood(user);
 	}
+	//重新发请求到邮箱里验证
 	@RequestMapping("resendEmail")
 	public ModelAndView resendEmail(int id) throws Exception{
 		userservice.resendEmail(id);
@@ -139,6 +149,8 @@ public class UserController {
 		mv.setViewName("verify");
 		return mv;
 	}
+	//上传用户图片
+	//TODO 建议在用户表再添加一个字段用于保存用户图片名
 	@RequestMapping("uploadImage")
 	public String imageupload(@RequestParam MultipartFile Image,HttpSession session) {
 		User user=(User)session.getAttribute("user");
@@ -178,6 +190,7 @@ public class UserController {
 		}
 		return "redirect:intoSpace.do";
 	}
+	//退出登录
 	@RequestMapping("exit")
 	public String exitLogin(HttpSession session){
 		session.removeAttribute("user");

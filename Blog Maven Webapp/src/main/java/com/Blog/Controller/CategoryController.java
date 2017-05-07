@@ -17,13 +17,14 @@ import com.Blog.Service.CategoryService;
 @RequestMapping("/category")
 public class CategoryController {
 	CategoryService categoryservice;
-	//ajax请求类别json
-	@RequestMapping("/getCategory")
+	//ajax请求类别列表json
+	@RequestMapping("/getCategoryList")
 	@ResponseBody
 	public List<Category> getCategory(HttpSession session){
 		User user=(User) session.getAttribute("user");
 		return categoryservice.getCategorys(user.getId());
 	}
+	//TODO  可精简掉该方法，统一用ajax请求类别列表
 	@RequestMapping("/getCategoryList")
 	public ModelAndView getCategoryList(HttpSession session){
 		User user=(User) session.getAttribute("user");
